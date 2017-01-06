@@ -14,7 +14,7 @@ router.get('/books', (_, res, next) => {
 });
 
 router.get('/books/:id', (req, res, next) => {
-  if (isNaN(parseInt(req.params.id))) {
+  if (!req.params.id.match(/(-?)\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).then((array) => {
@@ -37,7 +37,7 @@ router.post('/books', (req, res, next) => {
       description: 'Description',
       coverUrl: 'Cover URL'
     };
-    const err = new Error(`${message[missing]} must not be blank`);
+    const err = new Error(`${message[missing[0]]} must not be blank`);
 
     err.output = {}
     err.output['statusCode'] = 400;
@@ -50,7 +50,7 @@ router.post('/books', (req, res, next) => {
 });
 
 router.patch('/books/:id', (req, res, next) => {
-  if (isNaN(parseInt(req.params.id))) {
+  if (!req.params.id.match(/(-?)\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).then((array) => {
@@ -64,14 +64,14 @@ router.patch('/books/:id', (req, res, next) => {
 });
 
 router.delete('/books/:id', (req, res, next) => {
-  if (isNaN(parseInt(req.params.id))) {
+  if (!req.params.id.match(/(-?)\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).del('*').then((array) => {
     if (!array.length) {
       return next();
     }
-    delete array[0].id
+    delete array[0].id;
     res.send(camelizeKeys(array[0]));
   }).catch(err => next(err));
 });
