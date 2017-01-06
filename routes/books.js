@@ -1,23 +1,79 @@
 'use strict';
 
+const { camelizeKeys, decamelizeKeys } = require('humps');
 const express = require('express');
-const knex = require('../knex')
+const knex = require('../knex');
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-router.get('/books', (req, res, next) => {
-  knex('books').orderBy('id').then((array) => {
-    res.send(array);
+router.get('/books', (_, res, next) => {
+  knex('books').orderBy('title').then((array) => {
+    res.send(camelizeKeys(array));
   }).catch(err => next(err));
 });
 
-router.get();
+router.get('/books/:id', (req, res, next) => {
+  if (isNaN(parseInt(req.params.id))) {
+    return next();
+  }
+  knex('books').where('id', req.params.id).then((array) => {
+    if (!array.length) {
+      return next();
+    }
+    res.send(camelizeKeys(array[0]));
+  }).catch(err => next(err));
+});
 
-router.post();
+router.post('/books', (req, res, next) => {
+  const missing = ['title', 'author', 'genre', 'description', 'coverUrl'].filter((key) => {
+    return !Object.keys(req.body).includes(key)
+  });
+  if (missing.length) {
+    const message = {
+      title: 'Title',
+      author: 'Author',
+      genre: 'Genre',
+      description: 'Description',
+      coverUrl: 'Cover URL'
+    };
+    const err = new Error(`${message[missing]} must not be blank`);
 
-router.patch();
+    err.output = {}
+    err.output['statusCode'] = 400;
 
-router.delete();
+    throw err;
+  }
+  knex('books').insert(decamelizeKeys(req.body), '*').then((array) => {
+    res.send(camelizeKeys(array[0]));
+  }).catch(err => next(err));
+});
+
+router.patch('/books/:id', (req, res, next) => {
+  if (isNaN(parseInt(req.params.id))) {
+    return next();
+  }
+  knex('books').where('id', req.params.id).then((array) => {
+    if (!array.length) {
+      return next();
+    }
+    knex('books').where('id', req.params.id).update(decamelizeKeys(req.body), '*').then((array) => {
+      res.send(camelizeKeys(array[0]))
+    })
+  }).catch(err => next(err));
+});
+
+router.delete('/books/:id', (req, res, next) => {
+  if (isNaN(parseInt(req.params.id))) {
+    return next();
+  }
+  knex('books').where('id', req.params.id).del('*').then((array) => {
+    if (!array.length) {
+      return next();
+    }
+    delete array[0].id
+    res.send(camelizeKeys(array[0]));
+  }).catch(err => next(err));
+});
 
 module.exports = router;
