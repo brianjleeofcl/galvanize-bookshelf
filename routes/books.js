@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/books', (_, res, next) => {
   knex('books').orderBy('title').then((array) => {
     res.send(camelizeKeys(array));
-  }).catch(err => next(err));
+  }).catch((err) => next(err));
 });
 
 router.get('/books/:id', (req, res, next) => {
@@ -22,13 +22,18 @@ router.get('/books/:id', (req, res, next) => {
       return next();
     }
     res.send(camelizeKeys(array[0]));
-  }).catch(err => next(err));
+  }).catch((err) => next(err));
 });
 
 router.post('/books', (req, res, next) => {
-  const missing = ['title', 'author', 'genre', 'description', 'coverUrl'].filter((key) => {
-    return !Object.keys(req.body).includes(key)
-  });
+  const missing = [
+    'title',
+    'author',
+    'genre',
+    'description',
+    'coverUrl'
+  ].filter((key) => !Object.keys(req.body).includes(key));
+
   if (missing.length) {
     const message = {
       title: 'Title',
@@ -39,14 +44,14 @@ router.post('/books', (req, res, next) => {
     };
     const err = new Error(`${message[missing[0]]} must not be blank`);
 
-    err.output = {}
-    err.output['statusCode'] = 400;
+    err.output = {};
+    err.output.statusCode = 400;
 
     throw err;
   }
   knex('books').insert(decamelizeKeys(req.body), '*').then((array) => {
     res.send(camelizeKeys(array[0]));
-  }).catch(err => next(err));
+  }).catch((err) => next(err));
 });
 
 router.patch('/books/:id', (req, res, next) => {
@@ -57,10 +62,11 @@ router.patch('/books/:id', (req, res, next) => {
     if (!array.length) {
       return next();
     }
-    knex('books').where('id', req.params.id).update(decamelizeKeys(req.body), '*').then((array) => {
-      res.send(camelizeKeys(array[0]))
-    })
-  }).catch(err => next(err));
+    knex('books').where('id', req.params.id)
+      .update(decamelizeKeys(req.body), '*').then((array) => {
+        res.send(camelizeKeys(array[0]));
+      });
+  }).catch((err) => next(err));
 });
 
 router.delete('/books/:id', (req, res, next) => {
@@ -73,7 +79,7 @@ router.delete('/books/:id', (req, res, next) => {
     }
     delete array[0].id;
     res.send(camelizeKeys(array[0]));
-  }).catch(err => next(err));
+  }).catch((err) => next(err));
 });
 
 module.exports = router;
