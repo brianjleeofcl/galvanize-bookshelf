@@ -14,7 +14,7 @@ router.get('/books', (_, res, next) => {
 });
 
 router.get('/books/:id', (req, res, next) => {
-  if (!req.params.id.match(/(-?)\d+/)) {
+  if (!req.params.id.match(/\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).then((array) => {
@@ -26,6 +26,12 @@ router.get('/books/:id', (req, res, next) => {
 });
 
 router.post('/books', (req, res, next) => {
+  for (const key in req.body) {
+    if (req.body[key] === '' || typeof req.body[key] === 'undefined') {
+      delete req.body[key];
+    }
+  }
+
   const missing = [
     'title',
     'author',
@@ -55,7 +61,7 @@ router.post('/books', (req, res, next) => {
 });
 
 router.patch('/books/:id', (req, res, next) => {
-  if (!req.params.id.match(/(-?)\d+/)) {
+  if (!req.params.id.match(/\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).then((array) => {
@@ -70,7 +76,7 @@ router.patch('/books/:id', (req, res, next) => {
 });
 
 router.delete('/books/:id', (req, res, next) => {
-  if (!req.params.id.match(/(-?)\d+/)) {
+  if (!req.params.id.match(/\d+/)) {
     return next();
   }
   knex('books').where('id', req.params.id).del('*').then((array) => {
