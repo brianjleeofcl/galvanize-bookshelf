@@ -15,7 +15,7 @@ router.post('/users', (req, res, next) => {
   if (req.body.email) {
     if (req.body.password && req.body.password.length >= 8) {
       knex('users').where('email', req.body.email).then((data) => {
-        if (data) {
+        if (data.length) {
           return next(boom.badRequest('Email already exists'));
         }
 
