@@ -12,24 +12,22 @@ const router = express.Router();
 // YOUR CODE HERE
 
 router.post('/users', (req, res, next) => {
-  console.log(knex('users'));
   if (req.body.email) {
     if (req.body.password && req.body.password.length >= 8) {
       knex('users').where('email', req.body.email).then((data) => {
         if (data.length) {
-          return next(boom.badRequest('Email already exists'));
+          throw next(boom.badRequest('Email already exists'));
         }
 
-        bcrypt.hash(req.body.password, 12).then((hashed) => {
-          delete req.body.password;
-          req.body.hashedPassword = hashed;
-          knex('users').insert(decamelizeKeys(req.body), '*').then((array) => {
-            delete array[0]['hashed_password'];
-            res.send(camelizeKeys(array[0]));
-          })
-        })
-      })
-
+        return bcrypt.hash(req.body.password, 12)
+      }).then((hashed) => {
+        delete req.body.password;
+        req.body.hashedPassword = hashed;
+        return knex('users').insert(decamelizeKeys(req.body), '*')
+      }).then((array) => {
+        delete array[0]['hashed_password'];
+        res.send(camelizeKeys(array[0]));
+      }).catch((error) => next(error));
     }
     else {
       return next(boom.badRequest('Password must be at least 8 characters long'));
