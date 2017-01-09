@@ -64,8 +64,8 @@ router.patch('/books/:id', (req, res, next) => {
   if (!req.params.id.match(/\d+/)) {
     return next();
   }
-  knex('books').where('id', req.params.id).then((array) => {
-    if (!array.length) {
+  knex('books').where('id', req.params.id).then((data) => {
+    if (!data.length) {
       return next();
     }
     knex('books').where('id', req.params.id)

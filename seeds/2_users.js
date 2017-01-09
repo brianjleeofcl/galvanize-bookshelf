@@ -1,3 +1,5 @@
+/* eslint-disable camelcase, max-len */
+'use strict';
 
 exports.seed = function(knex, _Promise) {
   // Deletes ALL existing entries
@@ -15,5 +17,5 @@ exports.seed = function(knex, _Promise) {
       }]);
     }).then(() => {
       return knex.raw("SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));");
-    })
+    });
 };

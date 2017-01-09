@@ -12,6 +12,7 @@ const router = express.Router();
 // YOUR CODE HERE
 
 router.post('/users', (req, res, next) => {
+  console.log(knex('users'));
   if (req.body.email) {
     if (req.body.password && req.body.password.length >= 8) {
       knex('users').where('email', req.body.email).then((data) => {
