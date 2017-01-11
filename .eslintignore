@@ -1,3 +1,4 @@
 public/js/vendor/*
 test/*
 routes/bodycheck.js
+knexfile.js
