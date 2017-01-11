@@ -3,32 +3,35 @@
 const { camelizeKeys, decamelizeKeys } = require('humps');
 const express = require('express');
 const knex = require('../knex');
+const boom = require('boom');
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-router.get('/books', (_, res, next) => {
-  knex('books').orderBy('title').then((array) => {
-    res.send(camelizeKeys(array));
-  }).catch((err) => next(err));
-});
+router.get('/books', (_, res, next) => knex('books').orderBy('title')
+  .then((array) => res.send(camelizeKeys(array))).catch((err) => next(err)));
 
 router.get('/books/:id', (req, res, next) => {
   if (!req.params.id.match(/\d+/)) {
-    return next();
+    return next(boom.notFound());
   }
+
   knex('books').where('id', req.params.id).then((array) => {
     if (!array.length) {
-      return next();
+      throw boom.notFound();
     }
+
     res.send(camelizeKeys(array[0]));
   }).catch((err) => next(err));
 });
 
 router.post('/books', (req, res, next) => {
-  for (const key in req.body) {
-    if (req.body[key] === '' || typeof req.body[key] === 'undefined') {
-      delete req.body[key];
+  const { title, author, genre, description, coverUrl } = req.body;
+  const row = { title, author, genre, description, coverUrl };
+
+  for (const key in row) {
+    if (!row[key]) {
+      delete row[key];
     }
   }
 
@@ -38,7 +41,7 @@ router.post('/books', (req, res, next) => {
     'genre',
     'description',
     'coverUrl'
-  ].filter((key) => !Object.keys(req.body).includes(key));
+  ].filter((key) => !Object.keys(row).includes(key));
 
   if (missing.length) {
     const message = {
@@ -48,41 +51,42 @@ router.post('/books', (req, res, next) => {
       description: 'Description',
       coverUrl: 'Cover URL'
     };
-    const err = new Error(`${message[missing[0]]} must not be blank`);
 
-    err.output = {};
-    err.output.statusCode = 400;
-
-    throw err;
+    return next(boom.badRequest(`${message[missing[0]]} must not be blank`));
   }
-  knex('books').insert(decamelizeKeys(req.body), '*').then((array) => {
-    res.send(camelizeKeys(array[0]));
-  }).catch((err) => next(err));
+
+  knex('books').insert(decamelizeKeys(row), '*')
+    .then((array) => res.send(camelizeKeys(array[0])))
+    .catch((err) => next(err));
 });
 
 router.patch('/books/:id', (req, res, next) => {
+  const { title, author, genre, description, coverUrl } = req.body;
+  const row = { title, author, genre, description, coverUrl };
+
   if (!req.params.id.match(/\d+/)) {
-    return next();
+    return next(boom.notFound());
   }
   knex('books').where('id', req.params.id).then((data) => {
     if (!data.length) {
-      return next();
+      throw boom.notFound();
     }
-    knex('books').where('id', req.params.id)
-      .update(decamelizeKeys(req.body), '*').then((array) => {
-        res.send(camelizeKeys(array[0]));
-      });
-  }).catch((err) => next(err));
+
+    return knex('books').where('id', req.params.id)
+      .update(decamelizeKeys(row), '*');
+  }).then((array) => res.send(camelizeKeys(array[0])))
+    .catch((err) => next(err));
 });
 
 router.delete('/books/:id', (req, res, next) => {
   if (!req.params.id.match(/\d+/)) {
-    return next();
+    return next(boom.notFound());
   }
   knex('books').where('id', req.params.id).del('*').then((array) => {
     if (!array.length) {
-      return next();
+      throw boom.notFound();
     }
+
     delete array[0].id;
     res.send(camelizeKeys(array[0]));
   }).catch((err) => next(err));

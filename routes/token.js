@@ -11,13 +11,13 @@ const { camelizeKeys } = require('humps');
 const router = express.Router();
 
 router.get('/token', (req, res) => {
-  jwt.verify(req.cookies.token, process.env.JWT_KEY, (err, claim) => {
+  jwt.verify(req.cookies.token, process.env.JWT_KEY, (err, _) => {
     if (err) {
       return res.send(false);
     }
 
     res.send(true);
-  })
+  });
 });
 
 router.post('/token', (req, res, next) => {
@@ -25,10 +25,10 @@ router.post('/token', (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email) {
-    throw boom.badRequest('Email must not be blank')
+    throw boom.badRequest('Email must not be blank');
   }
   if (!password) {
-    throw boom.badRequest('Password must not be blank')
+    throw boom.badRequest('Password must not be blank');
   }
 
   knex('users').where('email', email).then((array) => {
@@ -40,9 +40,9 @@ router.post('/token', (req, res, next) => {
 
     return bcrypt.compare(password, user.hashedPassword);
   }).then(() => {
-    delete user.hashedPassword
+    delete user.hashedPassword;
 
-    const claim = {userId: user.id};
+    const claim = { userId: user.id };
     const token = jwt.sign(claim, process.env.JWT_KEY, {
       expiresIn: '7 days'
     });

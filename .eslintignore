@@ -1,2 +1,3 @@
 public/js/vendor/*
 test/*
+routes/bodycheck.js
